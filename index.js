@@ -35,7 +35,7 @@ const db = MongoClient.connect(uri, (err, db) => {
     } else {
         app.get('/', (req, res) => {
             // res.send('Root URL')
-            db.collection("main").find({}).toArray((err, result) => {
+            db.collection("users").find({}).toArray((err, result) => {
                 res.render('index', {
                     title: "Customer Lists: ",
                     users: result
@@ -117,7 +117,7 @@ const db = MongoClient.connect(uri, (err, db) => {
 
         app.put('/api/users/:id', (req, res) => {
 
-            db.collection('main').findAndModify({
+            db.collection('users').findAndModify({
                 id: req.params.id
             }, [
                 ['_id', 'asc']
@@ -135,7 +135,7 @@ const db = MongoClient.connect(uri, (err, db) => {
         });
 
         app.delete('/api/users/:id', (req, res) => {
-            db.collection('main').remove({
+            db.collection('users').remove({
                 id: req.params.id
             }, (err, result) => {
                 res.send('Deleted !')
