@@ -7,7 +7,7 @@ var morgan = require('morgan');
 var mongoose = require('mongoose');
 var jwt = require('jsonwebtoken');
 // var config = require('./config');
-// var port = process.env.PORT || 5000;
+var port = process.env.PORT || 5000;
 // var hostname = config.hostname;
 var apiRoutes = express.Router(); 
 // var Users = require('./controllers/userController.js');
@@ -103,7 +103,7 @@ const db = MongoClient.connect(uri, (err, db) => {
   }
 })
 
-app.listen(5000, function() {
+app.listen(port, function() {
     console.log('Server Started on Port 5000…');
 });
 
