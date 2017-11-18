@@ -6,18 +6,20 @@ var app = express();
 var morgan = require('morgan');
 var mongoose = require('mongoose');
 var jwt = require('jsonwebtoken');
-// var config = require('./config');
-var port = process.env.PORT || 5000;
-// var hostname = config.hostname;
-var apiRoutes = express.Router(); 
-// var Users = require('./controllers/userController.js');
+var config = require('./config');
+var port = process.env.PORT || config.port;
+var hash = require('./hash');
+var hostname = config.hostname;
+var apiRoutes = express.Router();
+var Users = require('./controllers/userController.js');
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded( {extended: true} ));
+app.use(bodyParser.urlencoded({
+    extended: false
+}));
 app.use(morgan('dev'));
 
-// mongoose.connect(config.database);
+mongoose.connect(config.database);
 
-//homework
 const http = require("http")
 const MongoClient = require("mongodb").MongoClient
 
@@ -26,88 +28,127 @@ const uri = "mongodb://jennb0111:1110bnnej@ds249575.mlab.com:49575/customerlist"
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// // Slide 15
-// //var db = mongojs('mongodb://jennb0111:1110bnnej@ds249575.mlab.com:49575/customerlist', ['main']);
-// // https://api.mlab.com/api/1/databases?apiKey=icHoJ5P87lgQAY9VXbOwfRxKtzNaEIGQ //complete resource url
-
-//Homework
 const db = MongoClient.connect(uri, (err, db) => {
-  if(err){
-      console.log(err)
-      console.log("Connection Error!!!")
-  }else{
-    app.get('/', (req, res) => {
-        // res.send('Root URL')
-        db.collection("main").find({}).toArray((err, result) => {
-            res.render('index', {
-                title: "Cusromer Lists: ",
-                users: result
-            });
-        })
+    if (err) {
+        console.log(err)
+        console.log("Connection Error!!!")
+    } else {
+        app.get('/', (req, res) => {
+            // res.send('Root URL')
+            db.collection("main").find({}).toArray((err, result) => {
+                res.render('index', {
+                    title: "Customer Lists: ",
+                    users: result
+                });
+            })
+
+        });
         
-    });
+        app.post('/api/users', function (req, res) {
+            Users.signup(req, res);
+        });
 
-    app.get('/user', function (req, res) {
-        db.collection('main').find({}).toArray((err, result) => {
-            res.json(result)
-        })
-    });
-    
-    app.post('/user/', function(req, res) {
-        var newUser = {
-            id: req.body.id,
-            name: req.body.name,
-            age: parseInt(req.body.age),
-            email: req.body.email
-        }
-        db.collection("main").insert(newUser, (err, result) => {
-            res.redirect('/')
-        })
-    });
+        app.post('/api/login', function (req, res) {
+            Users.login(req, res);
+        });
 
-    app.get('/user/:id', (req, res) => {
+        app.use(function (req, res, next) {
+            // code for token verification – continue on next slides
+            // if token is valid, continue to the specified sensitive route
+            // if token is NOT valid, return error message
+            var token = req.body.token || req.query.token || req.headers['x-access-token'];
+            if (token) {
+                jwt.verify(token, config.secret, function (err, decoded) {
+                    if (err) {
+                        return res.json({
+                            success: false,
+                            message: 'Invalid token.'
+                        });
+                    } else {
+                        req.decoded = decoded; // add decoded token to request obj.
+                        next(); // continue to the sensitive route
+                    }
+                });
+            } else {
+                return res.status(403).send({
+                    success: false,
+                    message: 'No token provided.'
+                });
+            }
+        });
 
-        db.collection("main").find({'id': req.params.id}).toArray((err, result) => {
-            res.json(result)
-        })
-        
-    });
+        app.get('/api/users', function (req, res) {
 
-    app.put('/user/:id',(req, res) => {
+                Users.getUsers(req, res);
+            
+        });
 
-        db.collection('main').findAndModify(
-            {
+
+
+        // last commit
+        // app.post('/user/', function(req, res) {
+        //     var newUser = {
+        //         id: req.body.id,
+        //         name: req.body.name,
+        //         age: parseInt(req.body.age),
+        //         email: req.body.email
+        //     }
+        //     db.collection("main").insert(newUser, (err, result) => {
+        //         res.redirect('/')
+        //     })
+        // });
+
+        app.get('/api/users/id/:id', function (req, res) {
+            Users.getUserById(req, res); // passing request and respond objs.
+        });
+
+        // last commit
+        // app.get('/user/:id', (req, res) => {
+
+        //     db.collection("main").find({'id': req.params.id}).toArray((err, result) => {
+        //         res.json(result)
+        //     })
+
+        // });
+
+        app.get('/api/users/:_id', function (req, res) {
+            Users.getUserByOId(req, res);
+        });
+
+        app.put('/api/users/:id', (req, res) => {
+
+            db.collection('main').findAndModify({
                 id: req.params.id
-            },
-            [['_id','asc']],
-            {
+            }, [
+                ['_id', 'asc']
+            ], {
                 $set: {
                     name: req.body.name,
                     age: req.body.age,
                     email: req.body.email
                 }
-            },
-            { new: true }
-        , (err, result, lastErrorObject) => {
-            res.send('Updated!')
+            }, {
+                new: true
+            }, (err, result, lastErrorObject) => {
+                res.send('Updated!')
+            });
         });
-    });
 
-    app.delete('/user/:id', (req, res) => {
-        db.collection('main').remove({
-            id: req.params.id
-        }, (err, result) => {
-            res.send('Deleted !')
-        })
-    });
-  }
+        app.delete('/api/users/:id', (req, res) => {
+            db.collection('main').remove({
+                id: req.params.id
+            }, (err, result) => {
+                res.send('Deleted !')
+            })
+        });
+
+
+    }
 })
 
-app.listen(port, function() {
+app.listen(port, function () {
     console.log('Server Started on Port 5000…');
 });
-
-
 
 // app.get('/api/users/id/:id', function(req,res) {
 //     Users.getUserById(req,res); // passing request and respond objs.
@@ -218,13 +259,13 @@ app.listen(port, function() {
 //     });
 
 // apiRoutes.use(function(req, res, next) {
-        
+
 //             // check header or url parameters or post parameters for token
 //             var token = req.body.token || req.param('token') || req.headers['x-access-token'];
-        
+
 //             // decode token
 //             if (token) {
-        
+
 //                 // verifies secret and checks exp
 //                 jwt.verify(token, app.get('superSecret'), function(err, decoded) {			
 //                     if (err) {
@@ -235,17 +276,16 @@ app.listen(port, function() {
 //                         next();
 //                     }
 //                 });
-        
+
 //             } else {
-        
+
 //                 // if there is no token
 //                 // return an error
 //                 return res.status(403).send({ 
 //                     success: false, 
 //                     message: 'No token provided.'
 //                 });
-                
+
 //             }
-            
+
 //         });
-        

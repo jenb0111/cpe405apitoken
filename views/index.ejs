@@ -12,18 +12,18 @@
 </html> -->
 
 <% include header %>
-    <form method="POST" action="/user/">
-        <label>ID</label><br>
-        <input type="text" name="id">
-        <br>
+    <form method="POST" action="/api/users/">
         <label>Full Name</label><br>
         <input type="text" name="name">
         <br>
         <label>Age</label><br>
-        <input type="number" name="age" id="">
+        <input type="text" name="age" id="">
         <br>
         <label>Email</label><br>
         <input type="text" name="email">
+        <br>
+        <label>Password</label><br>
+        <input type="text" name="password">
         <br><br>
         <input type="submit" value="Add">
     </form>
