@@ -6,8 +6,8 @@ var app = express();
 var morgan = require('morgan');
 var mongoose = require('mongoose');
 var jwt = require('jsonwebtoken');
-//var config = require('./config');
-// var port = process.env.PORT || config.port;
+// var config = require('./config');
+// var port = process.env.PORT || 5000;
 // var hostname = config.hostname;
 var apiRoutes = express.Router(); 
 // var Users = require('./controllers/userController.js');
@@ -20,6 +20,7 @@ app.use(morgan('dev'));
 //homework
 const http = require("http")
 const MongoClient = require("mongodb").MongoClient
+
 const uri = "mongodb://jennb0111:1110bnnej@ds249575.mlab.com:49575/customerlist"
 
 app.set('view engine', 'ejs');
@@ -102,8 +103,8 @@ const db = MongoClient.connect(uri, (err, db) => {
   }
 })
 
-app.listen(3000, function() {
-    console.log('Server Started on Port 3000…');
+app.listen(5000, function() {
+    console.log('Server Started on Port 5000…');
 });
 
 
